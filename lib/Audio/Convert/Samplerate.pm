@@ -44,12 +44,13 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         sub src_process(State, Data) returns int32 is native('libsamplerate') { * }
 
-        multi method process(Data $data is rw) {
+        multi method process(Data $data is rw) returns Data {
             my $rc = src_process(self, $data);
 
             if $rc != 0 {
                 X::ConvertError.new(error-code => $rc).throw;
             }
+            $data;
         }
 
         # put this in here as it simplifies matters
@@ -93,10 +94,12 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
     }
 
 
+    has Type  $!type;
+    has Int   $!channels;
     has State $!state;
 
-    submethod BUILD(Type :$type = Medium, Int :$channels = 2) {
-        $!state = State.new($type, $channels);
+    submethod BUILD(Type :$!type = Medium, Int :$!channels = 2) {
+        $!state = State.new($!type, $!channels);
     }
 
     sub src_get_version() returns Str is native('libsamplerate') { * }
