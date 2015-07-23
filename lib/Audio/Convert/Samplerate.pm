@@ -2,6 +2,7 @@ use v6;
 
 class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
     use NativeCall;
+    use NativeHelpers::Array;
 
     enum Type <Best Medium Fastest OrderHold Linear>;
 
@@ -108,6 +109,13 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
         my $v = src_get_version();
         Version.new($v);
     }
+
+    sub src_short_to_float_array(CArray[int16] $in, CArray[num32] $out, int32 $len) is native('libsamplerate') { * }
+    sub src_float_to_short_array(CArray[num32] $in, CArray[int16] $out, int32 $len) is native('libsamplerate') { * }
+
+    sub src_int_to_float_array(CArray[int32] $in, CArray[num32] $out, int32 $len) is native('libsamplerate') { * }
+    sub src_float_to_int_array(CArray[num32] $in, CArray[int32] $out, int32 $len) is native('libsamplerate') { * }
+
 }
 
 # vim: expandtab shiftwidth=4 ft=perl6
