@@ -4,6 +4,8 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
     use NativeCall;
     use NativeHelpers::Array;
 
+    subset RawProcess of Array where  ($_.elems == 2 ) && ($_[0] ~~ CArray[num32]) && ($_[1] ~~ Int);
+
     enum Type <Best Medium Fastest OrderHold Linear>;
 
     class X::ConvertError is Exception {
@@ -13,6 +15,14 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         method message() returns Str {
             src_strerror($!error-code);
+        }
+    }
+
+    class X::InvalidRatio is Exception {
+        has Num $.ratio is required;
+
+        method message() returns Str {
+            "The convertion ratio { $!ratio } is not valid";
         }
     }
 
@@ -97,7 +107,7 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
 
     has Type  $!type;
     has Int   $!channels;
-    has State $!state;
+    has State $!state handles <is-valid-ratio>;
 
     submethod BUILD(Type :$!type = Medium, Int :$!channels = 2) {
         $!state = State.new($!type, $!channels);
@@ -108,6 +118,41 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
     method samplerate-version() returns Version {
         my $v = src_get_version();
         Version.new($v);
+    }
+
+    method process(CArray[num32] $data-in, int64 $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
+
+        if not self.is-valid-ratio($src-ratio) {
+            X::InvalidRatio.new.throw;
+        }
+
+        my $data-out = CArray[num32].new;
+        my Int $output-frames = ($input-frames * $src-ratio).Int + 1;
+        $data-out[$output-frames] = 0;
+        my Int $input-frames-used = 0;
+        my Int $output-frames-gen = 0;
+        my Int $end-of-input = $last ?? 1 !! 0;
+
+=begin comment
+
+        has CArray[num32] $.data-in is rw;
+        has CArray[num32] $.data-out is rw;
+        has int64 $.input-frames is rw;
+        has int64 $.output-frames is rw; 
+        has int64 $.input-frames-used is rw;
+        has int64 $.output-frames-gen is rw;
+        has int32 $.end-of-input is rw;
+        has num64 $.src-ratio is rw;
+
+
+=end comment
+
+
+        my $data = Data.new(:$data-in, :$data-out, :$input-frames, :$output-frames, :$input-frames-used, :$output-frames-gen, :$end-of-input, :$src-ratio);
+
+        $!state.process($data);
+
+        [ $data.data-out, $data.output-frames-gen ];
     }
 
     sub src_short_to_float_array(CArray[int16] $in, CArray[num32] $out, int32 $len) is native('libsamplerate') { * }
