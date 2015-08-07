@@ -40,9 +40,10 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
             $!data-in := $data-in;
             $!input-frames = $input-frames;
             $!src-ratio = $src-ratio;
-            $!data-out := CArray[num32].new;
+            my CArray[num32] $data-out := CArray[num32].new;
             $!output-frames = ($input-frames * $src-ratio).Int + 10;
-            $!data-out[$!output-frames * $channels] = 0;
+            $data-out[$!output-frames * $channels] = 0;
+            $!data-out := $data-out;
             $!input-frames-used = 0;
             $!output-frames-gen = 0;
             $!end-of-input = $last ?? 1 !! 0;
@@ -139,8 +140,6 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
 
 
         my Data $data = Data.new(:$data-in, :$input-frames, :$last, :$src-ratio);
-
-        say nativesizeof($data);
 
         $data = $!state.process($data);
         refresh($data);

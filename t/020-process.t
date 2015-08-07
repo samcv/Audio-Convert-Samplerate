@@ -6,6 +6,7 @@ use Test;
 
 use Audio::Convert::Samplerate;
 use Audio::Sndfile;
+use NativeCall;
 
 my $test-data = $*CWD.child('t/data');
 
@@ -22,13 +23,20 @@ lives-ok { $conv-obj = Audio::Convert::Samplerate.new(channels => $in-obj.channe
 
 my $bufsize = 1024;
 
+my $in-frames-total = 0;
+my $out-frames-total = 0;
+
 loop {
     my ($in-frames, $num-frames) = $in-obj.read-float($bufsize, :raw).list;
-    say $num-frames;
+    $in-frames-total += $num-frames;
     my $buf;
-    $buf = $conv-obj.process($in-frames, $num-frames, 2);
-    last if $num-frames != $bufsize;
+    my Bool $last = ($num-frames != $bufsize);
+    lives-ok { $buf = $conv-obj.process($in-frames, $num-frames, 2, $last) }, "process $num-frames frames";
+    $out-frames-total += $buf[1];
+    isa-ok $buf[0], CArray[num32], "got the right sort of array back";
+    last if $last;
 }
+ok ($out-frames-total / ($in-frames-total * 2)) <1, "got the expected total number of frames (approximately)";
 
 
 
