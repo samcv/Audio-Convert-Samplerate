@@ -132,7 +132,7 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
         Version.new($v);
     }
 
-    method process(CArray[num32] $data-in, int64 $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
+    multi method process(CArray[num32] $data-in, int64 $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
 
         if not self.is-valid-ratio($src-ratio) {
             X::InvalidRatio.new.throw;
