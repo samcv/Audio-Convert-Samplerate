@@ -27,14 +27,26 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
     }
 
     class Data is repr('CStruct') {
-        has CArray[num32] $.data-in is rw;
-        has CArray[num32] $.data-out is rw;
-        has int64 $.input-frames is rw;
-        has int64 $.output-frames is rw;
-        has int64 $.input-frames-used is rw;
-        has int64 $.output-frames-gen is rw;
-        has int32 $.end-of-input is rw;
-        has num64 $.src-ratio is rw;
+        has CArray[num32] $.data-in;
+        has CArray[num32] $.data-out;
+        has int64 $.input-frames;
+        has int64 $.output-frames;
+        has int64 $.input-frames-used;
+        has int64 $.output-frames-gen;
+        has int32 $.end-of-input;
+        has num64 $.src-ratio;
+
+        submethod BUILD(CArray[num32] :$data-in!, Int :$input-frames!, Num() :$src-ratio!, Int :$channels = 2, Bool :$last = False) {
+            $!data-in := $data-in;
+            $!input-frames = $input-frames;
+            $!src-ratio = $src-ratio;
+            $!data-out := CArray[num32].new;
+            $!output-frames = ($input-frames * $src-ratio).Int + 10;
+            $!data-out[$!output-frames * $channels] = 0;
+            $!input-frames-used = 0;
+            $!output-frames-gen = 0;
+            $!end-of-input = $last ?? 1 !! 0;
+        }
     }
 
     class State is repr('CPointer') {
@@ -43,7 +55,6 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
 
         method new(Type $type, Int $channels) returns State {
             my Int $error = 0;
-            say $type.WHAT, $channels.WHAT;
             my $state = src_new($type.Int, $channels, $error);
 
             if not $state.defined {
@@ -53,7 +64,7 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
             $state;
         }
 
-        sub src_process(State, Data) returns int32 is native('libsamplerate') { * }
+        sub src_process(State $st, Data $d is rw) returns int32 is native('libsamplerate') { * }
 
         multi method process(Data $data is rw) returns Data {
             my $rc = src_process(self, $data);
@@ -126,31 +137,13 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
             X::InvalidRatio.new.throw;
         }
 
-        my $data-out = CArray[num32].new;
-        my Int $output-frames = ($input-frames * $src-ratio).Int + 1;
-        $data-out[$output-frames] = 0;
-        my Int $input-frames-used = 0;
-        my Int $output-frames-gen = 0;
-        my Int $end-of-input = $last ?? 1 !! 0;
 
-=begin comment
+        my Data $data = Data.new(:$data-in, :$input-frames, :$last, :$src-ratio);
 
-        has CArray[num32] $.data-in is rw;
-        has CArray[num32] $.data-out is rw;
-        has int64 $.input-frames is rw;
-        has int64 $.output-frames is rw; 
-        has int64 $.input-frames-used is rw;
-        has int64 $.output-frames-gen is rw;
-        has int32 $.end-of-input is rw;
-        has num64 $.src-ratio is rw;
+        say nativesizeof($data);
 
-
-=end comment
-
-
-        my $data = Data.new(:$data-in, :$data-out, :$input-frames, :$output-frames, :$input-frames-used, :$output-frames-gen, :$end-of-input, :$src-ratio);
-
-        $!state.process($data);
+        $data = $!state.process($data);
+        refresh($data);
 
         [ $data.data-out, $data.output-frames-gen ];
     }
