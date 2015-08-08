@@ -4,7 +4,7 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
     use NativeCall;
     use NativeHelpers::Array;
 
-    subset RawProcess of Array where  ($_.elems == 2 ) && ($_[0] ~~ CArray[num32]) && ($_[1] ~~ Int);
+    subset RawProcess of Array where  ($_.elems == 2 ) && ($_[0] ~~ CArray) && ($_[1] ~~ Int);
 
     enum Type <Best Medium Fastest OrderHold Linear>;
 
@@ -132,7 +132,7 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
         Version.new($v);
     }
 
-    multi method process(CArray[num32] $data-in, int64 $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
+    multi method process(CArray[num32] $data-in, Int $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
 
         if not self.is-valid-ratio($src-ratio) {
             X::InvalidRatio.new.throw;
@@ -145,6 +145,32 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
         refresh($data);
 
         [ $data.data-out, $data.output-frames-gen ];
+    }
+
+    multi method process(CArray[int16] $data-in, Int $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
+        my CArray[num32] $new-data = CArray[num32].new;
+        my Int $total-frames = ($input-frames * $!channels).Int;
+        $new-data[$total-frames] = 0;
+        src_short_to_float_array($data-in, $new-data, $total-frames);
+        (my $float-out, my $frames-out ) = self.process($new-data, $input-frames, $src-ratio, $last).list;
+        my CArray[int16] $int-out = CArray[int16].new;
+        my Int $total-out = ($frames-out * $!channels).Int;
+        $int-out[$total-out] = 0;
+        src_float_to_short_array($float-out, $int-out, $total-out);
+        [ $int-out, $frames-out ]
+    }
+
+    multi method process(CArray[int32] $data-in, Int $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
+        my CArray[num32] $new-data = CArray[num32].new;
+        my Int $total-frames = ($input-frames * $!channels).Int;
+        $new-data[$total-frames] = 0;
+        src_int_to_float_array($data-in, $new-data, $total-frames);
+        (my $float-out, my $frames-out ) = self.process($new-data, $input-frames, $src-ratio, $last).list;
+        my CArray[int32] $int-out = CArray[int32].new;
+        my Int $total-out = ($frames-out * $!channels).Int;
+        $int-out[$total-out] = 0;
+        src_float_to_int_array($float-out, $int-out, $total-out);
+        [ $int-out, $frames-out ]
     }
 
     sub src_short_to_float_array(CArray[int16] $in, CArray[num32] $out, int32 $len) is native('libsamplerate') { * }
