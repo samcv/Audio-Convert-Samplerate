@@ -147,30 +147,41 @@ class Audio::Convert::Samplerate:ver<v0.0.1>:auth<github:jonathanstowe> {
         [ $data.data-out, $data.output-frames-gen ];
     }
 
-    multi method process(CArray[int16] $data-in, Int $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
+    method !process-other(Mu $type, CArray $data-in, Int $input-frames, Num() $src-ratio, Bool $last, &to, &from) returns RawProcess {
         my CArray[num32] $new-data = CArray[num32].new;
         my Int $total-frames = ($input-frames * $!channels).Int;
         $new-data[$total-frames] = 0;
-        src_short_to_float_array($data-in, $new-data, $total-frames);
+        &to($data-in, $new-data, $total-frames);
         (my $float-out, my $frames-out ) = self.process($new-data, $input-frames, $src-ratio, $last).list;
-        my CArray[int16] $int-out = CArray[int16].new;
+        my CArray $int-out = CArray[$type].new;
         my Int $total-out = ($frames-out * $!channels).Int;
         $int-out[$total-out] = 0;
-        src_float_to_short_array($float-out, $int-out, $total-out);
+        &from($float-out, $int-out, $total-out);
         [ $int-out, $frames-out ]
     }
 
+    multi method process(CArray[int16] $data-in, Int $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
+        self!process-other(int16, $data-in, $input-frames, $src-ratio, $last, &src_short_to_float_array, &src_float_to_short_array);
+    }
+
     multi method process(CArray[int32] $data-in, Int $input-frames, Num() $src-ratio, Bool $last = False) returns RawProcess {
-        my CArray[num32] $new-data = CArray[num32].new;
-        my Int $total-frames = ($input-frames * $!channels).Int;
-        $new-data[$total-frames] = 0;
-        src_int_to_float_array($data-in, $new-data, $total-frames);
-        (my $float-out, my $frames-out ) = self.process($new-data, $input-frames, $src-ratio, $last).list;
-        my CArray[int32] $int-out = CArray[int32].new;
-        my Int $total-out = ($frames-out * $!channels).Int;
-        $int-out[$total-out] = 0;
-        src_float_to_int_array($float-out, $int-out, $total-out);
-        [ $int-out, $frames-out ]
+        self!process-other(int32, $data-in, $input-frames, $src-ratio, $last, &src_int_to_float_array, &src_float_to_int_array);
+    }
+
+    method !process-array(Mu $type, @items, Num() $src-ratio, Bool $last = False) returns Array {
+        my CArray $carray = copy-to-carray(@items, $type);
+        my $frames = (@items.elems / $!channels).Int;
+        my $ret = self.process($carray, $frames, $src-ratio, $last);
+        copy-to-array($ret[0], $ret[1] * $!channels);
+    }
+    method process-float(@items, Num() $src-ratio, Bool $last = False) returns Array {
+        self!process-array(num32, @items, $src-ratio, $last);
+    }
+    method process-short(@items, Num() $src-ratio, Bool $last = False) returns Array {
+        self!process-array(int16, @items, $src-ratio, $last);
+    }
+    method process-int(@items, Num() $src-ratio, Bool $last = False) returns Array {
+        self!process-array(int32, @items, $src-ratio, $last);
     }
 
     sub src_short_to_float_array(CArray[int16] $in, CArray[num32] $out, int32 $len) is native('libsamplerate') { * }
