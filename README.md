@@ -4,19 +4,19 @@ Convert the samplerate of PCM audio data using libsamplerate (AKA "Secret Rabbit
 
 ## Description
 
-This provides a mechanism for doing sample rate conversion of PCM audio data using 
-libsamplerate (http://www.mega-nerd.com/libsamplerate/) the implementation of which
-is both fairly quick and accurate.
+This provides a mechanism for doing sample rate conversion of PCM audio
+data using libsamplerate (http://www.mega-nerd.com/libsamplerate/)
+the implementation of which is both fairly quick and accurate.
 
-The interface is fairly simple, providing methods to work with native C arrays where
-the raw speed is important as well as perl arrays where further processing is 
-required on the data.
+The interface is fairly simple, providing methods to work with native
+C arrays where the raw speed is important as well as perl arrays where
+further processing is required on the data.
 
-The native library is designed to work only with 32 bit floating point samples so
-working with other sample types requires some conversion and a subsequent small
-loss of efficiency (although the int and short to float conversions are done in
-C code and so are reasonably quick.)  There is no support for 64 bit int (long) or
-float (double) data.
+The native library is designed to work only with 32 bit floating point
+samples so working with other sample types requires some conversion
+and a subsequent small loss of efficiency (although the int and short
+to float conversions are done in C code and so are reasonably quick.)
+There is no support for 64 bit int (long) or float (double) data.
 
 
 ## Installation
