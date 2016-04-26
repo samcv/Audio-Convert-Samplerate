@@ -2,6 +2,8 @@
 
 Convert the samplerate of PCM audio data using libsamplerate (AKA "Secret Rabbit Code".)
 
+[![Build Status](https://travis-ci.org/jonathanstowe/Audio-Convert-Samplerate.svg?branch=master)](https://travis-ci.org/jonathanstowe/Audio-Convert-Samplerate)
+
 ## Description
 
 This provides a mechanism for doing sample rate conversion of PCM audio
