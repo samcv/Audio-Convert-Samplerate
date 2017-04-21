@@ -1,27 +1,36 @@
 {
-  "name" : "Audio::Convert::Samplerate",
-  "tags" : [ "audio", "utils", "comvert" ],
-  "authors" : [ "Jonathan Stowe <jns+git@gellyfish.co.uk>" ],
-  "author" : "Jonathan Stowe <jns+git@gellyfish.co.uk>",
-  "auth" : "github:jonathanstowe",
-  "support" : {
-    "source" : "git://github.com/jonathanstowe/Audio-Convert-Samplerate.git"
+  "name": "Audio::Convert::Samplerate",
+  "support": {
+    "source": "https://github.com/samcv/Audio-Convert-Samplerate",
+    "bugtracker": "https://github.com/samcv/Audio-Convert-Samplerate/issues"
   },
-  "source-url" : "git://github.com/jonathanstowe/Audio-Convert-Samplerate.git",
-  "perl" : "6.c",
-  "build-depends" : [
+  "source-url": "git://github.com/samcv/Audio-Convert-Samplerate.git",
+  "perl": "6.c",
+  "author": "Jonathan Stowe <jns+git@gellyfish.co.uk>",
+  "build-depends": [
+    
   ],
-  "provides" : {
-    "Audio::Convert::Samplerate":  "lib/Audio/Convert/Samplerate.pm"
-  },
-  "depends" : [
+  "auth": "github:samcv",
+  "depends": [
     "NativeHelpers::Array"
   ],
-  "test-depends" : [
+  "license": "Artistic-2.0",
+  "tags": [
+    "audio",
+    "utils",
+    "comvert"
+  ],
+  "provides": {
+    "Audio::Convert::Samplerate": "lib/Audio/Convert/Samplerate.pm"
+  },
+  "test-depends": [
     "LibraryCheck",
     "Audio::Sndfile",
     "Test"
   ],
-  "description" : "Convert the samplerate of PCM audio data using libsamplerate",
-  "version" : "0.0.7"
+  "version": "0.0.7",
+  "authors": [
+    "Jonathan Stowe <jns+git@gellyfish.co.uk>"
+  ],
+  "description": "Convert the samplerate of PCM audio data using libsamplerate"
 }
